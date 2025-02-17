@@ -46,22 +46,17 @@ const AppSidebar = ({ onLogout }: AppSidebarProps) => {
             <SidebarMenu>
               {items.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton
-                    asChild
-                    active={location.pathname === item.url}
-                  >
-                    <Link to={item.url} className="flex items-center gap-2">
-                      <item.icon className="w-4 h-4" />
-                      <span>{item.title}</span>
-                    </Link>
-                  </SidebarMenuButton>
+                  <Link to={item.url} className="flex items-center gap-2">
+                    <item.icon className="w-4 h-4" />
+                    <span>{item.title}</span>
+                  </Link>
                 </SidebarMenuItem>
               ))}
               <SidebarMenuItem>
-                <SidebarMenuButton onClick={onLogout} className="flex items-center gap-2">
+                <button onClick={onLogout} className="flex items-center gap-2">
                   <LogOut className="w-4 h-4" />
                   <span>Déconnexion</span>
-                </SidebarMenuButton>
+                </button>
               </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>

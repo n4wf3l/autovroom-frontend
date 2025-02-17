@@ -18,9 +18,9 @@ const Login = ({ setIsAuthenticated }: LoginProps) => {
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (code === "password1" || code === "password2") {
+    if (code.length > 0) { // Allow any non-empty code
       localStorage.setItem("auth", code);
-      localStorage.setItem("dbFilter", code === "password1" ? "2025" : "all");
+      localStorage.setItem("dbFilter", "all"); // Show all data
       setIsAuthenticated(true);
       navigate("/inventory");
       toast({
@@ -30,7 +30,7 @@ const Login = ({ setIsAuthenticated }: LoginProps) => {
     } else {
       toast({
         title: "Erreur de connexion",
-        description: "Code d'accès invalide",
+        description: "Veuillez entrer un code d'accès",
         variant: "destructive",
       });
     }
