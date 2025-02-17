@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
@@ -182,6 +181,7 @@ const Inventory = () => {
               <TableHead>Pièce</TableHead>
               <TableHead>Catégorie</TableHead>
               <TableHead>Quantité</TableHead>
+              <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -200,6 +200,11 @@ const Inventory = () => {
                 <TableCell>{product.partName}</TableCell>
                 <TableCell>{product.category}</TableCell>
                 <TableCell>{product.quantity}</TableCell>
+                <TableCell>
+                  <Button variant="outline" size="sm">
+                    Voir plus
+                  </Button>
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>
@@ -216,7 +221,7 @@ const Inventory = () => {
                   alt={product.partName}
                   className="w-20 h-20 object-cover rounded-md"
                 />
-                <div>
+                <div className="flex-1">
                   <h3 className="font-semibold">{product.partName}</h3>
                   <p className="text-sm text-gray-600">
                     {product.brand} {product.model} ({product.year})
@@ -227,6 +232,9 @@ const Inventory = () => {
                   <p className="text-sm font-medium mt-2">
                     Quantité: {product.quantity}
                   </p>
+                  <Button variant="outline" size="sm" className="mt-4 w-full">
+                    Voir plus
+                  </Button>
                 </div>
               </div>
             </CardContent>

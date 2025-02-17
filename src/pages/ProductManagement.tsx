@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -25,7 +24,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Upload } from "lucide-react";
+import { Plus, Upload, Eye } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { QRCodeCanvas } from "qrcode.react";
 import jsPDF from "jspdf";
@@ -97,7 +96,6 @@ const ProductManagement = () => {
   };
 
   const handleAddProduct = () => {
-    // Validate form
     if (Object.values(productForm).some((value) => !value)) {
       toast({
         title: "Erreur",
@@ -107,7 +105,6 @@ const ProductManagement = () => {
       return;
     }
 
-    // Generate PDF with QR code
     generatePDF(productForm);
 
     toast({
@@ -254,7 +251,7 @@ const ProductManagement = () => {
         </Dialog>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
             <CardTitle>Ajouter une Catégorie</CardTitle>
@@ -297,23 +294,15 @@ const ProductManagement = () => {
 
         <Card>
           <CardHeader>
-            <CardTitle>Historique</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <Eye className="w-4 h-4" />
+              Voir historique
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-gray-500">
-              Visualisez l'historique des entrées et sorties
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Scanner QR</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-gray-500">
-              Scannez un code QR pour gérer un produit
-            </p>
+            <Button variant="outline" className="w-full">
+              Consulter l'historique
+            </Button>
           </CardContent>
         </Card>
       </div>
