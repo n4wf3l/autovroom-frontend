@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
@@ -10,9 +11,44 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Edit, Trash2 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { generatePDF } from "@/utils/pdf";
 
 const Inventory = () => {
   const [searchTerm, setSearchTerm] = useState("");
+  const { toast } = useToast();
+  const [selectedProduct, setSelectedProduct] = useState<typeof products[0] | null>(null);
+
+  const handleEdit = (product: typeof products[0]) => {
+    toast({
+      title: "Modification",
+      description: `Modification de ${product.partName} en cours de développement.`,
+    });
+  };
+
+  const handleDelete = (product: typeof products[0]) => {
+    toast({
+      title: "Suppression",
+      description: `Suppression de ${product.partName} en cours de développement.`,
+      variant: "destructive",
+    });
+  };
+
+  const handleGeneratePDF = (product: typeof products[0]) => {
+    generatePDF(product);
+    toast({
+      title: "PDF généré",
+      description: "L'étiquette a été générée avec succès.",
+    });
+  };
 
   const products = [
     {
@@ -201,9 +237,21 @@ const Inventory = () => {
                 <TableCell>{product.category}</TableCell>
                 <TableCell>{product.quantity}</TableCell>
                 <TableCell>
-                  <Button variant="outline" size="sm">
-                    Voir plus
-                  </Button>
+                  <div className="flex gap-2">
+                    <Dialog onOpenChange={() => setSelectedProduct(product)}>
+                      <DialogTrigger asChild>
+                        <Button variant="outline" size="sm">
+                          Voir plus
+                        </Button>
+                      </DialogTrigger>
+                    </Dialog>
+                    <Button variant="outline" size="icon" onClick={() => handleEdit(product)}>
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button variant="outline" size="icon" onClick={() => handleDelete(product)}>
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </TableCell>
               </TableRow>
             ))}
@@ -232,15 +280,95 @@ const Inventory = () => {
                   <p className="text-sm font-medium mt-2">
                     Quantité: {product.quantity}
                   </p>
-                  <Button variant="outline" size="sm" className="mt-4 w-full">
-                    Voir plus
-                  </Button>
+                  <div className="flex gap-2 mt-4">
+                    <Dialog onOpenChange={() => setSelectedProduct(product)}>
+                      <DialogTrigger asChild>
+                        <Button variant="outline" size="sm" className="flex-1">
+                          Voir plus
+                        </Button>
+                      </DialogTrigger>
+                    </Dialog>
+                    <Button variant="outline" size="icon" onClick={() => handleEdit(product)}>
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button variant="outline" size="icon" onClick={() => handleDelete(product)}>
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
               </div>
             </CardContent>
           </Card>
         ))}
       </div>
+
+      <Dialog open={!!selectedProduct} onOpenChange={(open) => !open && setSelectedProduct(null)}>
+        <DialogContent className="max-w-[90%] w-[600px]">
+          <DialogHeader>
+            <DialogTitle>Détails du Produit</DialogTitle>
+          </DialogHeader>
+          {selectedProduct && (
+            <div className="space-y-6">
+              <div className="flex flex-col items-center gap-4">
+                <img
+                  src={selectedProduct.photo}
+                  alt={selectedProduct.partName}
+                  className="w-40 h-40 object-cover rounded-lg"
+                />
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                <div>
+                  <p className="font-semibold">Marque</p>
+                  <p>{selectedProduct.brand}</p>
+                </div>
+                <div>
+                  <p className="font-semibold">Modèle</p>
+                  <p>{selectedProduct.model}</p>
+                </div>
+                <div>
+                  <p className="font-semibold">Année</p>
+                  <p>{selectedProduct.year}</p>
+                </div>
+                <div>
+                  <p className="font-semibold">Type de moteur</p>
+                  <p>{selectedProduct.engineType}</p>
+                </div>
+                <div>
+                  <p className="font-semibold">Nom de la pièce</p>
+                  <p>{selectedProduct.partName}</p>
+                </div>
+                <div>
+                  <p className="font-semibold">Numéro de chassis</p>
+                  <p>{selectedProduct.chassisNumber}</p>
+                </div>
+                <div>
+                  <p className="font-semibold">Numéro de référence</p>
+                  <p>{selectedProduct.referenceNumber}</p>
+                </div>
+                <div>
+                  <p className="font-semibold">Quantité</p>
+                  <p>{selectedProduct.quantity}</p>
+                </div>
+                <div>
+                  <p className="font-semibold">Catégorie</p>
+                  <p>{selectedProduct.category}</p>
+                </div>
+              </div>
+              <div className="flex flex-col md:flex-row gap-4 justify-end">
+                <Button variant="outline" onClick={() => handleEdit(selectedProduct)}>
+                  Modifier
+                </Button>
+                <Button variant="outline" onClick={() => handleDelete(selectedProduct)}>
+                  Supprimer
+                </Button>
+                <Button onClick={() => handleGeneratePDF(selectedProduct)}>
+                  Générer étiquette
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
