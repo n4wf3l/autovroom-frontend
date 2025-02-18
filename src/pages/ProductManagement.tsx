@@ -27,7 +27,7 @@ import {
 import { Plus, Upload, Eye } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { QRCodeCanvas } from "qrcode.react";
-import jsPDF from "jspdf";
+import { generatePDF } from "@/utils/pdf";
 
 const ProductManagement = () => {
   const { toast } = useToast();
@@ -69,30 +69,13 @@ const ProductManagement = () => {
   };
 
   const generateQRCode = (productData: typeof productForm) => {
-    const qrData = JSON.stringify(productData);
-    const canvas = document.createElement("canvas");
-    QRCodeCanvas({
-      value: qrData,
-      size: 128,
-      level: "H",
-    }, canvas);
-    return canvas.toDataURL();
-  };
-
-  const generatePDF = (productData: typeof productForm) => {
-    const doc = new jsPDF({
-      format: [50, 30],
-      unit: "mm",
-    });
-    
-    const qrCodeDataUrl = generateQRCode(productData);
-    doc.addImage(qrCodeDataUrl, "PNG", 5, 2, 20, 20);
-    doc.setFontSize(8);
-    doc.text(productData.partName, 27, 8);
-    doc.text(`${productData.brand} ${productData.model}`, 27, 12);
-    doc.text(`Réf: ${productData.referenceNumber}`, 27, 16);
-    
-    doc.save(`label-${productData.referenceNumber}.pdf`);
+    return (
+      <QRCodeCanvas
+        value={JSON.stringify(productData)}
+        size={128}
+        level="H"
+      />
+    );
   };
 
   const handleAddProduct = () => {
@@ -105,7 +88,11 @@ const ProductManagement = () => {
       return;
     }
 
-    generatePDF(productForm);
+    generatePDF({
+      ...productForm,
+      quantity: Number(productForm.quantity),
+      id: Math.random().toString(36).substr(2, 9)
+    });
 
     toast({
       title: "Produit ajouté",
