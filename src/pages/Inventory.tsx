@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
@@ -18,23 +17,34 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Edit, Trash2 } from "lucide-react";
+import { Edit, Filter, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { generatePDF } from "@/utils/pdf";
+import type { ProductData } from "@/utils/pdf";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const Inventory = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const { toast } = useToast();
-  const [selectedProduct, setSelectedProduct] = useState<typeof products[0] | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<ProductData | null>(null);
+  const [selectedModel, setSelectedModel] = useState<string>("");
+  const [selectedYear, setSelectedYear] = useState<string>("");
+  const [selectedCategory, setSelectedCategory] = useState<string>("");
 
-  const handleEdit = (product: typeof products[0]) => {
+  const handleEdit = (product: ProductData) => {
     toast({
       title: "Modification",
       description: `Modification de ${product.partName} en cours de développement.`,
     });
   };
 
-  const handleDelete = (product: typeof products[0]) => {
+  const handleDelete = (product: ProductData) => {
     toast({
       title: "Suppression",
       description: `Suppression de ${product.partName} en cours de développement.`,
@@ -42,7 +52,7 @@ const Inventory = () => {
     });
   };
 
-  const handleGeneratePDF = (product: typeof products[0]) => {
+  const handleGeneratePDF = (product: ProductData) => {
     generatePDF(product);
     toast({
       title: "PDF généré",
@@ -50,7 +60,7 @@ const Inventory = () => {
     });
   };
 
-  const products = [
+  const products: ProductData[] = [
     {
       id: "1",
       photo: "/placeholder.svg",
@@ -183,26 +193,86 @@ const Inventory = () => {
     },
   ];
 
-  const filteredProducts = products.filter((product) =>
-    Object.values(product).some(
+  const uniqueModels = Array.from(new Set(products.map((p) => p.model)));
+  const uniqueYears = Array.from(new Set(products.map((p) => p.year)));
+  const uniqueCategories = Array.from(new Set(products.map((p) => p.category)));
+
+  const filteredProducts = products.filter((product) => {
+    const matchesSearch = Object.values(product).some(
       (value) =>
         typeof value === "string" &&
         value.toLowerCase().includes(searchTerm.toLowerCase())
-    )
-  );
+    );
+    const matchesModel = selectedModel ? product.model === selectedModel : true;
+    const matchesYear = selectedYear ? product.year === selectedYear : true;
+    const matchesCategory = selectedCategory ? product.category === selectedCategory : true;
+
+    return matchesSearch && matchesModel && matchesYear && matchesCategory;
+  });
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+      <div className="flex flex-col gap-4">
         <h1 className="text-3xl font-semibold">Inventaire</h1>
-        <div className="flex w-full md:w-auto gap-4">
+        <div className="flex flex-col md:flex-row gap-4">
           <Input
             placeholder="Rechercher..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full md:w-[300px]"
           />
-          <Button>Filtrer</Button>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-2 w-full md:w-auto">
+            <Select value={selectedModel} onValueChange={setSelectedModel}>
+              <SelectTrigger>
+                <SelectValue placeholder="Modèle" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">Tous les modèles</SelectItem>
+                {uniqueModels.map((model) => (
+                  <SelectItem key={model} value={model}>
+                    {model}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={selectedYear} onValueChange={setSelectedYear}>
+              <SelectTrigger>
+                <SelectValue placeholder="Année" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">Toutes les années</SelectItem>
+                {uniqueYears.map((year) => (
+                  <SelectItem key={year} value={year}>
+                    {year}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+              <SelectTrigger>
+                <SelectValue placeholder="Catégorie" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">Toutes les catégories</SelectItem>
+                {uniqueCategories.map((category) => (
+                  <SelectItem key={category} value={category}>
+                    {category}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button
+              variant="outline"
+              className="md:hidden"
+              onClick={() => {
+                setSelectedModel("");
+                setSelectedYear("");
+                setSelectedCategory("");
+              }}
+            >
+              Réinitialiser les filtres
+            </Button>
+          </div>
         </div>
       </div>
 

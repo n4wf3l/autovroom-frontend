@@ -2,7 +2,7 @@
 import { jsPDF } from "jspdf";
 import { generateQRCodeCanvas } from "./qrcode";
 
-interface ProductData {
+export interface ProductData {
   photo: string;
   brand: string;
   model: string;
@@ -11,8 +11,9 @@ interface ProductData {
   partName: string;
   chassisNumber: string;
   referenceNumber: string;
-  quantity: string;
+  quantity: number;
   category: string;
+  id: string;
 }
 
 export const generatePDF = (productData: ProductData) => {

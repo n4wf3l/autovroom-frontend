@@ -1,16 +1,16 @@
 
 import { QRCodeCanvas } from "qrcode.react";
-import React from "react";
+import { createRoot } from 'react-dom/client';
 
 export const generateQRCodeCanvas = (data: string) => {
   const canvas = document.createElement("canvas");
-  React.render(
-    React.createElement(QRCodeCanvas, {
-      value: data,
-      size: 128,
-      level: "H",
-    }),
-    canvas
+  const root = createRoot(canvas);
+  root.render(
+    <QRCodeCanvas
+      value={data}
+      size={128}
+      level="H"
+    />
   );
   return canvas.toDataURL();
 };
