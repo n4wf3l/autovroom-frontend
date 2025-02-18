@@ -52,12 +52,20 @@ const Inventory = () => {
     });
   };
 
-  const handleGeneratePDF = (product: ProductData) => {
-    generatePDF(product);
-    toast({
-      title: "PDF généré",
-      description: "L'étiquette a été générée avec succès.",
-    });
+  const handleGeneratePDF = async (product: ProductData) => {
+    try {
+      await generatePDF(product);
+      toast({
+        title: "PDF généré",
+        description: "L'étiquette a été générée avec succès.",
+      });
+    } catch (error) {
+      toast({
+        title: "Erreur",
+        description: "Une erreur est survenue lors de la génération du PDF.",
+        variant: "destructive",
+      });
+    }
   };
 
   const products: ProductData[] = [
