@@ -33,9 +33,9 @@ const Inventory = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const { toast } = useToast();
   const [selectedProduct, setSelectedProduct] = useState<ProductData | null>(null);
-  const [selectedModel, setSelectedModel] = useState<string>("");
-  const [selectedYear, setSelectedYear] = useState<string>("");
-  const [selectedCategory, setSelectedCategory] = useState<string>("");
+  const [selectedModel, setSelectedModel] = useState<string>("all");
+  const [selectedYear, setSelectedYear] = useState<string>("all");
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
 
   const handleEdit = (product: ProductData) => {
     toast({
@@ -211,9 +211,9 @@ const Inventory = () => {
         typeof value === "string" &&
         value.toLowerCase().includes(searchTerm.toLowerCase())
     );
-    const matchesModel = selectedModel ? product.model === selectedModel : true;
-    const matchesYear = selectedYear ? product.year === selectedYear : true;
-    const matchesCategory = selectedCategory ? product.category === selectedCategory : true;
+    const matchesModel = selectedModel === "all" ? true : product.model === selectedModel;
+    const matchesYear = selectedYear === "all" ? true : product.year === selectedYear;
+    const matchesCategory = selectedCategory === "all" ? true : product.category === selectedCategory;
 
     return matchesSearch && matchesModel && matchesYear && matchesCategory;
   });
@@ -235,7 +235,7 @@ const Inventory = () => {
                 <SelectValue placeholder="Modèle" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Tous les modèles</SelectItem>
+                <SelectItem value="all">Tous les modèles</SelectItem>
                 {uniqueModels.map((model) => (
                   <SelectItem key={model} value={model}>
                     {model}
@@ -248,7 +248,7 @@ const Inventory = () => {
                 <SelectValue placeholder="Année" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Toutes les années</SelectItem>
+                <SelectItem value="all">Toutes les années</SelectItem>
                 {uniqueYears.map((year) => (
                   <SelectItem key={year} value={year}>
                     {year}
@@ -261,7 +261,7 @@ const Inventory = () => {
                 <SelectValue placeholder="Catégorie" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Toutes les catégories</SelectItem>
+                <SelectItem value="all">Toutes les catégories</SelectItem>
                 {uniqueCategories.map((category) => (
                   <SelectItem key={category} value={category}>
                     {category}
@@ -273,9 +273,9 @@ const Inventory = () => {
               variant="outline"
               className="md:hidden"
               onClick={() => {
-                setSelectedModel("");
-                setSelectedYear("");
-                setSelectedCategory("");
+                setSelectedModel("all");
+                setSelectedYear("all");
+                setSelectedCategory("all");
               }}
             >
               Réinitialiser les filtres
