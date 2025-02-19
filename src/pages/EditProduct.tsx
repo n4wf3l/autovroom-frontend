@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -11,6 +10,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { Image } from "lucide-react";
 import type { ProductData } from "@/utils/pdf";
 
 const EditProduct = () => {
@@ -18,6 +18,7 @@ const EditProduct = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const [loading, setLoading] = useState(true);
+  const [previewUrl, setPreviewUrl] = useState<string>("");
 
   const [productForm, setProductForm] = useState<Omit<ProductData, "id">>({
     photo: "",
@@ -42,9 +43,7 @@ const EditProduct = () => {
     "Refroidissement",
   ];
 
-  // Simuler le chargement des données du produit
   useEffect(() => {
-    // Dans un cas réel, vous feriez un appel API ici
     const mockProduct = {
       photo: "/placeholder.svg",
       brand: "Renault",
@@ -59,13 +58,21 @@ const EditProduct = () => {
     };
 
     setProductForm(mockProduct);
+    setPreviewUrl(mockProduct.photo);
     setLoading(false);
   }, [id]);
 
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const newUrl = URL.createObjectURL(file);
+      setPreviewUrl(newUrl);
+      setProductForm((prev) => ({ ...prev, photo: newUrl }));
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Validation des champs
     if (Object.values(productForm).some((value) => !value)) {
       toast({
         title: "Erreur",
@@ -74,8 +81,6 @@ const EditProduct = () => {
       });
       return;
     }
-
-    // Simuler la sauvegarde
     toast({
       title: "Succès",
       description: "Le produit a été modifié avec succès",
@@ -99,17 +104,24 @@ const EditProduct = () => {
       <form onSubmit={handleSubmit} className="space-y-4 max-w-2xl">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
-            <label htmlFor="photo" className="text-sm font-medium">
-              Photo
-            </label>
-            <Input
-              id="photo"
-              type="text"
-              value={productForm.photo}
-              onChange={(e) =>
-                setProductForm((prev) => ({ ...prev, photo: e.target.value }))
-              }
-            />
+            <label className="text-sm font-medium">Photo</label>
+            <div className="flex flex-col items-center p-4 border-2 border-dashed rounded-lg">
+              {previewUrl ? (
+                <img
+                  src={previewUrl}
+                  alt="Aperçu"
+                  className="w-32 h-32 object-cover rounded-lg mb-2"
+                />
+              ) : (
+                <Image className="w-32 h-32 text-gray-400" />
+              )}
+              <Input
+                type="file"
+                accept="image/*"
+                onChange={handlePhotoChange}
+                className="mt-2"
+              />
+            </div>
           </div>
 
           <div className="space-y-2">

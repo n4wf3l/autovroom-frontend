@@ -1,12 +1,51 @@
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import Webcam from "react-webcam";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Camera, X } from "lucide-react";
+import jsQR from "jsqr";
+import { useToast } from "@/hooks/use-toast";
 
 const ScanQR = () => {
   const [isScanning, setIsScanning] = useState(false);
+  const webcamRef = useRef<Webcam>(null);
+  const { toast } = useToast();
+
+  const processImage = (imageSrc: string) => {
+    const image = new Image();
+    image.src = imageSrc;
+    image.onload = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = image.width;
+      canvas.height = image.height;
+      const ctx = canvas.getContext("2d");
+      
+      if (ctx) {
+        ctx.drawImage(image, 0, 0);
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const code = jsQR(imageData.data, imageData.width, imageData.height);
+        
+        if (code) {
+          toast({
+            title: "QR Code détecté",
+            description: "Les informations ont été récupérées avec succès.",
+          });
+          console.log("QR Code content:", code.data);
+          // Ici vous pouvez traiter les données du QR code
+        }
+      }
+    };
+  };
+
+  const capture = () => {
+    if (webcamRef.current) {
+      const imageSrc = webcamRef.current.getScreenshot();
+      if (imageSrc) {
+        processImage(imageSrc);
+      }
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -14,7 +53,17 @@ const ScanQR = () => {
         <h1 className="text-3xl font-semibold">Scanner QR</h1>
         <Button
           variant={isScanning ? "destructive" : "default"}
-          onClick={() => setIsScanning(!isScanning)}
+          onClick={() => {
+            setIsScanning(!isScanning);
+            if (!isScanning && webcamRef.current) {
+              // Start scanning when camera is enabled
+              const interval = setInterval(capture, 500);
+              webcamRef.current.video?.addEventListener("play", () => {
+                console.log("Camera started");
+              });
+              return () => clearInterval(interval);
+            }
+          }}
         >
           {isScanning ? (
             <>
@@ -34,7 +83,11 @@ const ScanQR = () => {
         <CardContent className="p-6">
           {isScanning ? (
             <div className="aspect-video relative">
-              <Webcam className="rounded-lg w-full" />
+              <Webcam
+                ref={webcamRef}
+                className="rounded-lg w-full"
+                screenshotFormat="image/jpeg"
+              />
             </div>
           ) : (
             <div className="aspect-video bg-gray-100 rounded-lg flex items-center justify-center">
