@@ -1,5 +1,5 @@
 
-import { Outlet, useNavigate } from "react-router-dom";
+import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { SidebarProvider } from "./ui/sidebar";
 import AppSidebar from "./AppSidebar";
 import { Button } from "./ui/button";
@@ -14,12 +14,18 @@ interface LayoutProps {
 const Layout = ({ setIsAuthenticated }: LayoutProps) => {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
+  const location = useLocation();
+  const isLoginPage = location.pathname === "/login";
 
   const handleLogout = () => {
     localStorage.removeItem("auth");
     setIsAuthenticated(false);
     navigate("/login");
   };
+
+  if (isLoginPage) {
+    return <Outlet />;
+  }
 
   return (
     <SidebarProvider>
