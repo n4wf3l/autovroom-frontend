@@ -1,55 +1,32 @@
 
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { useState, useEffect } from "react";
-import Login from "./pages/Login";
+import Layout from "./components/Layout";
+import Index from "./pages/Index";
 import Inventory from "./pages/Inventory";
 import ProductManagement from "./pages/ProductManagement";
 import ScanQR from "./pages/ScanQR";
+import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
-import Layout from "./components/Layout";
+import EditProduct from "./pages/EditProduct";
 
-const queryClient = new QueryClient();
-
-const App = () => {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
-
-  useEffect(() => {
-    const auth = localStorage.getItem("auth");
-    setIsAuthenticated(!!auth);
-  }, []);
-
+function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/login" element={<Login setIsAuthenticated={setIsAuthenticated} />} />
-            <Route
-              element={
-                isAuthenticated ? (
-                  <Layout setIsAuthenticated={setIsAuthenticated} />
-                ) : (
-                  <Navigate to="/login" />
-                )
-              }
-            >
-              <Route path="/" element={<Navigate to="/inventory" />} />
-              <Route path="/inventory" element={<Inventory />} />
-              <Route path="/product-management" element={<ProductManagement />} />
-              <Route path="/scan" element={<ScanQR />} />
-            </Route>
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
-    </QueryClientProvider>
+    <Router>
+      <Routes>
+        <Route path="/" element={<Layout />}>
+          <Route index element={<Index />} />
+          <Route path="inventory" element={<Inventory />} />
+          <Route path="edit-product/:id" element={<EditProduct />} />
+          <Route path="product-management" element={<ProductManagement />} />
+          <Route path="scan-qr" element={<ScanQR />} />
+          <Route path="login" element={<Login />} />
+          <Route path="*" element={<NotFound />} />
+        </Route>
+      </Routes>
+      <Toaster />
+    </Router>
   );
-};
+}
 
 export default App;

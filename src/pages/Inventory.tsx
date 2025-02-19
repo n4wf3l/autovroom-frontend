@@ -28,8 +28,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useNavigate } from "react-router-dom";
 
 const Inventory = () => {
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const { toast } = useToast();
   const [selectedProduct, setSelectedProduct] = useState<ProductData | null>(null);
@@ -38,10 +40,7 @@ const Inventory = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
 
   const handleEdit = (product: ProductData) => {
-    toast({
-      title: "Modification",
-      description: `Modification de ${product.partName} en cours de développement.`,
-    });
+    navigate(`/edit-product/${product.id}`);
   };
 
   const handleDelete = (product: ProductData) => {
