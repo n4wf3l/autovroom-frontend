@@ -62,27 +62,7 @@ const ScanQR = () => {
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-semibold">Scanner QR Code</h1>
-        <Button
-          size="lg"
-          variant={isScanning ? "destructive" : "default"}
-          onClick={() => setIsScanning(!isScanning)}
-          className="px-6"
-        >
-          {isScanning ? (
-            <>
-              <X className="w-5 h-5 mr-2" />
-              Arrêter le scan
-            </>
-          ) : (
-            <>
-              <Camera className="w-5 h-5 mr-2" />
-              Démarrer le scan
-            </>
-          )}
-        </Button>
-      </div>
+      <h1 className="text-3xl font-semibold">Scanner QR Code</h1>
 
       <Card className="overflow-hidden border-2">
         <CardContent className="p-0">
@@ -116,6 +96,27 @@ const ScanQR = () => {
           )}
         </CardContent>
       </Card>
+
+      <div className="fixed bottom-6 left-0 right-0 flex justify-center px-4">
+        <Button
+          size="lg"
+          variant={isScanning ? "destructive" : "default"}
+          onClick={() => setIsScanning(!isScanning)}
+          className="px-8 py-6 text-lg shadow-lg"
+        >
+          {isScanning ? (
+            <>
+              <X className="w-6 h-6 mr-2" />
+              Arrêter le scan
+            </>
+          ) : (
+            <>
+              <Camera className="w-6 h-6 mr-2" />
+              Scanner
+            </>
+          )}
+        </Button>
+      </div>
     </div>
   );
 };
