@@ -1,16 +1,17 @@
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import Webcam from "react-webcam";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Camera, X } from "lucide-react";
-import jsQR from "jsqr";
 import { useToast } from "@/hooks/use-toast";
+import jsQR from "jsqr";
 
 const ScanQR = () => {
   const [isScanning, setIsScanning] = useState(false);
   const webcamRef = useRef<Webcam>(null);
   const { toast } = useToast();
+  const scanIntervalRef = useRef<number>();
 
   const processImage = (imageSrc: string) => {
     const image = new Image();
@@ -32,7 +33,8 @@ const ScanQR = () => {
             description: "Les informations ont été récupérées avec succès.",
           });
           console.log("QR Code content:", code.data);
-          // Ici vous pouvez traiter les données du QR code
+          setIsScanning(false); // Arrêter le scan une fois un QR code détecté
+          clearInterval(scanIntervalRef.current);
         }
       }
     };
@@ -47,23 +49,24 @@ const ScanQR = () => {
     }
   };
 
+  useEffect(() => {
+    if (isScanning) {
+      scanIntervalRef.current = window.setInterval(capture, 500);
+      return () => {
+        if (scanIntervalRef.current) {
+          clearInterval(scanIntervalRef.current);
+        }
+      };
+    }
+  }, [isScanning]);
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-semibold">Scanner QR</h1>
         <Button
           variant={isScanning ? "destructive" : "default"}
-          onClick={() => {
-            setIsScanning(!isScanning);
-            if (!isScanning && webcamRef.current) {
-              // Start scanning when camera is enabled
-              const interval = setInterval(capture, 500);
-              webcamRef.current.video?.addEventListener("play", () => {
-                console.log("Camera started");
-              });
-              return () => clearInterval(interval);
-            }
-          }}
+          onClick={() => setIsScanning(!isScanning)}
         >
           {isScanning ? (
             <>
@@ -87,6 +90,11 @@ const ScanQR = () => {
                 ref={webcamRef}
                 className="rounded-lg w-full"
                 screenshotFormat="image/jpeg"
+                videoConstraints={{
+                  facingMode: "environment",
+                  width: { ideal: 1280 },
+                  height: { ideal: 720 }
+                }}
               />
             </div>
           ) : (
