@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -28,14 +29,37 @@ import { Plus, Upload, Eye } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { QRCodeCanvas } from "qrcode.react";
 import { generatePDF } from "@/utils/pdf";
+import { jsPDF } from "jspdf";
+import QRCode from "qrcode";
+import API from "@/services/api";
 
 const ProductManagement = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
+
   const [openProductDialog, setOpenProductDialog] = useState(false);
   const [openCategoryDialog, setOpenCategoryDialog] = useState(false);
   const [newCategory, setNewCategory] = useState("");
-  const [productForm, setProductForm] = useState({
-    photo: "",
+
+  type ProductForm = {
+    id?: string;
+    photo: File | string | null;
+    brand: string;
+    model: string;
+    year: string;
+    engineType: string;
+    partName: string;
+    chassisNumber: string;
+    referenceNumber: string;
+    quantity: string;
+    category: string;
+    qrCode?: string;
+  };
+
+  const [productForm, setProductForm] = useState<ProductForm>({
+    id: "",
+    photo: null,
     brand: "",
     model: "",
     year: "",
@@ -47,70 +71,188 @@ const ProductManagement = () => {
     category: "",
   });
 
-  const categories = [
-    "Filtration",
-    "Freinage",
-    "Suspension",
-    "Distribution",
-    "Électrique",
-    "Transmission",
-    "Refroidissement",
-  ];
+  const [categories, setCategories] = useState<string[]>([]);
+  const [products, setProducts] = useState<ProductForm[]>([]); // 🔥 Liste dynamique des produits
 
-  const handleAddCategory = () => {
-    if (newCategory) {
+  // 🔥 Charge les catégories et produits au montage
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [categoryRes, productRes] = await Promise.all([
+          API.get("/categories"),
+          API.get("/products"),
+        ]);
+
+        setCategories(categoryRes.data.map((c: { name: string }) => c.name));
+        setProducts(productRes.data);
+      } catch (error) {
+        console.error("❌ Erreur lors de la récupération des données :", error);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  // 🎯 Ajouter une nouvelle catégorie dynamiquement
+  const handleAddCategory = async () => {
+    if (!newCategory.trim()) return;
+
+    try {
+      const response = await API.post("/categories", { name: newCategory });
+
+      if (response.status === 201) {
+        toast({
+          title: "Catégorie ajoutée",
+          description: `La catégorie "${newCategory}" a été ajoutée avec succès.`,
+        });
+
+        setCategories((prev) => [...prev, response.data.name]);
+        setOpenCategoryDialog(false);
+        setNewCategory("");
+      }
+    } catch (error) {
+      console.error("❌ Erreur lors de l'ajout de la catégorie :", error);
       toast({
-        title: "Catégorie ajoutée",
-        description: `La catégorie "${newCategory}" a été ajoutée avec succès.`,
+        title: "Erreur",
+        description: "Impossible d'ajouter la catégorie. Essayez encore.",
+        variant: "destructive",
       });
-      setOpenCategoryDialog(false);
-      setNewCategory("");
     }
   };
 
-  const generateQRCode = (productData: typeof productForm) => {
-    return (
-      <QRCodeCanvas
-        value={JSON.stringify(productData)}
-        size={128}
-        level="H"
-      />
-    );
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0] || null;
+    setProductForm((prev) => ({ ...prev, photo: file }));
   };
 
-  const handleAddProduct = () => {
-    if (Object.values(productForm).some((value) => !value)) {
-      toast({
-        title: "Erreur",
-        description: "Veuillez remplir tous les champs",
-        variant: "destructive",
-      });
+  const generateQRCode = async (productData: ProductForm) => {
+    try {
+      const qrCodeDataUrl = await QRCode.toDataURL(JSON.stringify(productData));
+      console.log("📌 QR Code généré", qrCodeDataUrl);
+      return qrCodeDataUrl;
+    } catch (error) {
+      console.error("❌ Erreur lors de la génération du QR Code :", error);
+      return null;
+    }
+  };
+
+  const generatePDF = async (product: ProductForm) => {
+    console.log("📌 generatePDF exécuté", product);
+
+    if (!product.qrCode) {
+      console.error("❌ Impossible d'ajouter le QR Code, URL manquante");
       return;
     }
 
-    generatePDF({
-      ...productForm,
-      quantity: Number(productForm.quantity),
-      id: Math.random().toString(36).substr(2, 9)
+    const doc = new jsPDF({
+      orientation: "portrait",
+      unit: "mm",
+      format: [50, 50], // Taille étiquette
     });
 
-    toast({
-      title: "Produit ajouté",
-      description: "Le produit a été ajouté avec succès et l'étiquette a été générée.",
+    // Ajouter le QR Code
+    doc.addImage(product.qrCode, "PNG", 10, 10, 30, 30);
+
+    // Ajouter la référence sous le QR Code
+    doc.setFontSize(8);
+    doc.text(`Ref: ${product.referenceNumber}`, 10, 45);
+
+    console.log("📌 Sauvegarde du PDF...");
+    doc.save(`etiquette-${product.id || "produit"}.pdf`);
+  };
+
+  const handleAddProduct = async () => {
+    if (loading) return; // ⛔ Empêcher plusieurs clics
+
+    console.log("🚀 Bouton Ajouter cliqué");
+    setLoading(true); // 🟢 Activer le chargement
+
+    const formData = new FormData();
+
+    Object.entries(productForm).forEach(([key, value]) => {
+      if (key === "quantity") {
+        formData.append(key, String(Number(value))); // ✅ Conversion propre
+      } else if (key === "engineType") {
+        formData.append("engine_type", value);
+      } else if (key === "partName") {
+        formData.append("part_name", value);
+      } else if (key === "chassisNumber") {
+        formData.append("chassis_number", value || "");
+      } else if (key === "referenceNumber") {
+        formData.append("reference_number", value || "");
+      } else if (key !== "photo") {
+        formData.append(key, value ?? "");
+      }
     });
-    setOpenProductDialog(false);
-    setProductForm({
-      photo: "",
-      brand: "",
-      model: "",
-      year: "",
-      engineType: "",
-      partName: "",
-      chassisNumber: "",
-      referenceNumber: "",
-      quantity: "",
-      category: "",
-    });
+
+    if (productForm.photo) {
+      formData.append("photo", productForm.photo);
+    }
+
+    console.log("📌 Données envoyées :", Object.fromEntries(formData));
+
+    try {
+      const response = await API.post("/products", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+
+      console.log("✅ Réponse API reçue :", response.data);
+
+      if (response.status === 201) {
+        // Génération du QR Code et du PDF
+        const qrCodeUrl = await generateQRCode({
+          ...productForm,
+          id: response.data.id,
+        });
+
+        const pdfData: ProductForm = {
+          ...productForm,
+          id: response.data.id,
+          quantity: String(productForm.quantity), // TypeScript attend une string, alors on convertit proprement
+          photo: productForm.photo
+            ? typeof productForm.photo === "string"
+              ? productForm.photo // Si c'est déjà une URL, on la garde
+              : URL.createObjectURL(productForm.photo) // Sinon, on génère une URL temporaire
+            : "",
+          qrCode: qrCodeUrl,
+        };
+
+        await generatePDF(pdfData);
+
+        toast({
+          title: "Produit ajouté",
+          description:
+            "Le produit a été ajouté avec succès et l'étiquette a été générée.",
+        });
+
+        setOpenProductDialog(false);
+        setProductForm({
+          photo: null,
+          brand: "",
+          model: "",
+          year: "",
+          engineType: "",
+          partName: "",
+          chassisNumber: "",
+          referenceNumber: "",
+          quantity: "",
+          category: "",
+        });
+
+        navigate("/inventory"); // 🔥 Redirection après ajout
+      }
+    } catch (error) {
+      console.error("❌ Erreur API :", error);
+      toast({
+        title: "Erreur",
+        description:
+          "Impossible d'ajouter le produit. Vérifiez votre connexion.",
+        variant: "destructive",
+      });
+    } finally {
+      navigate("/inventory");
+      setLoading(false); // 🔴 Désactiver le loading à la fin
+    }
   };
 
   return (
@@ -133,10 +275,34 @@ const ProductManagement = () => {
             </DialogHeader>
             <div className="space-y-4 py-4">
               <div className="flex flex-col items-center gap-4">
-                <div className="w-32 h-32 bg-gray-100 rounded-lg flex items-center justify-center">
-                  <Upload className="w-8 h-8 text-gray-400" />
-                </div>
-                <Button variant="outline" size="sm">
+                <label
+                  htmlFor="photo"
+                  className="w-32 h-32 bg-gray-100 rounded-lg flex items-center justify-center cursor-pointer"
+                >
+                  {productForm.photo ? (
+                    <img
+                      src={
+                        typeof productForm.photo === "string"
+                          ? productForm.photo // Si c'est déjà une URL, on l'utilise directement
+                          : URL.createObjectURL(productForm.photo)
+                      } // Sinon, on génère une URL temporaire
+                      alt="Aperçu du produit"
+                      className="w-32 h-32 rounded-lg"
+                    />
+                  ) : (
+                    <Upload className="w-8 h-8 text-gray-400" />
+                  )}
+                </label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                />
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => document.getElementById("photo")?.click()}
+                >
                   Choisir une photo
                 </Button>
               </div>
@@ -157,6 +323,7 @@ const ProductManagement = () => {
                 />
                 <Input
                   placeholder="Année"
+                  type="number"
                   value={productForm.year}
                   onChange={(e) =>
                     setProductForm({ ...productForm, year: e.target.value })
@@ -166,7 +333,10 @@ const ProductManagement = () => {
                   placeholder="Type de moteur"
                   value={productForm.engineType}
                   onChange={(e) =>
-                    setProductForm({ ...productForm, engineType: e.target.value })
+                    setProductForm({
+                      ...productForm,
+                      engineType: e.target.value,
+                    })
                   }
                 />
                 <Input
@@ -177,7 +347,7 @@ const ProductManagement = () => {
                   }
                 />
                 <Input
-                  placeholder="Numéro de chassis"
+                  placeholder="Numéro de châssis"
                   value={productForm.chassisNumber}
                   onChange={(e) =>
                     setProductForm({
@@ -231,7 +401,9 @@ const ProductManagement = () => {
                 >
                   Annuler
                 </Button>
-                <Button onClick={handleAddProduct}>Ajouter</Button>
+                <Button onClick={handleAddProduct} disabled={loading}>
+                  {loading ? "Ajout en cours..." : "Ajouter"}
+                </Button>
               </div>
             </div>
           </DialogContent>
@@ -244,7 +416,10 @@ const ProductManagement = () => {
             <CardTitle>Ajouter une Catégorie</CardTitle>
           </CardHeader>
           <CardContent>
-            <Dialog open={openCategoryDialog} onOpenChange={setOpenCategoryDialog}>
+            <Dialog
+              open={openCategoryDialog}
+              onOpenChange={setOpenCategoryDialog}
+            >
               <DialogTrigger asChild>
                 <Button variant="outline" className="w-full">
                   <Plus className="w-4 h-4 mr-2" />
@@ -276,18 +451,36 @@ const ProductManagement = () => {
                 </div>
               </DialogContent>
             </Dialog>
+
+            {/* 🔥 Liste des Catégories Dynamiques */}
+            <div className="mt-4 space-y-2">
+              {categories.length === 0 ? (
+                <p className="text-gray-500 text-sm">
+                  Aucune catégorie ajoutée.
+                </p>
+              ) : (
+                categories.map((category, index) => (
+                  <div
+                    key={index}
+                    className="flex items-center justify-between p-2 bg-gray-100 rounded-md"
+                  >
+                    <span>{category}</span>
+                  </div>
+                ))
+              )}
+            </div>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Eye className="w-4 h-4" />
               Voir historique
             </CardTitle>
           </CardHeader>
           <CardContent>
             <Button variant="outline" className="w-full">
+              <Eye className="w-4 h-4" />
               Consulter l'historique
             </Button>
           </CardContent>
