@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from "react";
 import Webcam from "react-webcam";
 import { Button } from "@/components/ui/button";
@@ -21,12 +20,12 @@ const ScanQR = () => {
       canvas.width = image.width;
       canvas.height = image.height;
       const ctx = canvas.getContext("2d");
-      
+
       if (ctx) {
         ctx.drawImage(image, 0, 0);
         const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
         const code = jsQR(imageData.data, imageData.width, imageData.height);
-        
+
         if (code) {
           toast({
             title: "QR Code détecté",
@@ -35,6 +34,10 @@ const ScanQR = () => {
           console.log("QR Code content:", code.data);
           setIsScanning(false);
           clearInterval(scanIntervalRef.current);
+
+          // Here you can handle the QR code data, for example:
+          // Navigate to the product view page using the scanned ID
+          // window.location.href = `/products/${code.data}`;
         }
       }
     };
@@ -61,8 +64,8 @@ const ScanQR = () => {
   }, [isScanning]);
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
-      <h1 className="text-3xl font-semibold">Scanner QR Code</h1>
+    <div className="max-w-4xl mx-auto p-4 space-y-6">
+      <h1 className="text-3xl font-semibold text-center">Scanner QR Code</h1>
 
       <Card className="overflow-hidden border-2">
         <CardContent className="p-0">
@@ -75,7 +78,7 @@ const ScanQR = () => {
                 videoConstraints={{
                   facingMode: "environment",
                   width: { ideal: 1280 },
-                  height: { ideal: 720 }
+                  height: { ideal: 720 },
                 }}
               />
               <div className="absolute inset-0 border-[3px] border-dashed border-primary/50 m-8 rounded-lg"></div>
@@ -87,7 +90,7 @@ const ScanQR = () => {
             <div className="aspect-video bg-gray-100 flex flex-col items-center justify-center p-8 text-center">
               <Camera className="w-12 h-12 text-gray-400 mb-4" />
               <p className="text-lg text-gray-500 font-medium">
-                Cliquez sur "Démarrer le scan" pour commencer
+                Cliquez sur "Scanner" pour commencer
               </p>
               <p className="text-sm text-gray-400 mt-2">
                 Assurez-vous que le QR code est bien éclairé et centré
@@ -97,17 +100,17 @@ const ScanQR = () => {
         </CardContent>
       </Card>
 
-      <div className="fixed bottom-6 left-0 right-0 flex justify-center px-4">
+      <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 flex justify-center text-center px-4">
         <Button
           size="lg"
           variant={isScanning ? "destructive" : "default"}
           onClick={() => setIsScanning(!isScanning)}
-          className="px-8 py-6 text-lg shadow-lg"
+          className="w-full max-w-xs px-8 py-6 text-lg shadow-lg rounded-full"
         >
           {isScanning ? (
             <>
               <X className="w-6 h-6 mr-2" />
-              Arrêter le scan
+              Arrêter
             </>
           ) : (
             <>

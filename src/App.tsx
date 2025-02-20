@@ -1,4 +1,3 @@
-
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
 import Layout from "./components/Layout";
@@ -20,7 +19,7 @@ function App() {
           <Route path="inventory" element={<Inventory />} />
           <Route path="edit-product/:id" element={<EditProduct />} />
           <Route path="product-management" element={<ProductManagement />} />
-          <Route path="scan-qr" element={<ScanQR />} />
+          <Route path="scan" element={<ScanQR />} />
           <Route path="history" element={<History />} />
           <Route
             path="login"
